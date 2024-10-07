@@ -25,10 +25,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rdiykru.dencryptor.R
+import com.rdiykru.dencryptor.ui.components.DencryptedContent
 import com.rdiykru.dencryptor.ui.components.FileContentDisplay
 import com.rdiykru.dencryptor.ui.components.KeyPair
 import com.rdiykru.dencryptor.ui.components.OperationSelectionBar
@@ -123,39 +123,23 @@ fun HomeScreen(
 						}
 
 						if (homeState.encryptedContent.isNotEmpty()) {
-							Column(
+							DencryptedContent(
 								modifier = Modifier
 									.fillMaxWidth()
-									.padding(8.dp)
-							) {
-								Text(
-									"Encrypted Content:",
-									style = MaterialTheme.typography.bodyLarge
-								)
-								Text(
-									text = homeState.encryptedContent,
-									style = MaterialTheme.typography.bodyMedium,
-									overflow = TextOverflow.Ellipsis
-								)
-							}
+									.padding(top = 8.dp),
+								title = "Encrypted Content:",
+								content = homeState.encryptedContent
+							)
 						}
 
 						if (homeState.decryptedContent.isNotEmpty()) {
-							Column(
+							DencryptedContent(
 								modifier = Modifier
 									.fillMaxWidth()
-									.padding(top = 8.dp)
-							) {
-								Text(
-									text = "Decrypted Content:",
-									style = MaterialTheme.typography.bodyLarge
-								)
-								Text(
-									text = homeState.decryptedContent,
-									style = MaterialTheme.typography.bodyMedium,
-									overflow = TextOverflow.Ellipsis
-								)
-							}
+									.padding(top = 8.dp),
+								title = "Decrypted Content:",
+								content = homeState.decryptedContent
+							)
 						}
 					}
 				}
