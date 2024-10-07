@@ -12,7 +12,7 @@ android {
 
 	defaultConfig {
 		applicationId = "com.rdiykru.dencryptor"
-		minSdk = 28
+		minSdk = 23
 		targetSdk = 34
 		versionCode = 1
 		versionName = "1.0"
@@ -62,6 +62,7 @@ dependencies {
 	implementation(libs.androidx.ui.graphics)
 	implementation(libs.androidx.ui.tooling.preview)
 	implementation(libs.androidx.material3)
+	implementation(libs.androidx.ui.text.google.fonts)
 
 	// Hilt with KSP
 	ksp(libs.hilt.compiler)

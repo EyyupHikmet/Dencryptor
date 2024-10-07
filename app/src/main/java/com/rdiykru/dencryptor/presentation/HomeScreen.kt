@@ -3,7 +3,9 @@ package com.rdiykru.dencryptor.presentation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,8 +15,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.rdiykru.dencryptor.ui.components.FileContentDisplay
 import com.rdiykru.dencryptor.ui.components.OperationSelectionBar
@@ -30,6 +34,9 @@ fun HomeScreen(
 	onEncryptClicked: () -> Unit,
 	onDecryptClicked: () -> Unit
 ) {
+	val bottomPaddingInPixels = WindowInsets.navigationBars.getBottom(LocalDensity.current)
+	val bottomPaddingInDp = with(LocalDensity.current) { bottomPaddingInPixels.toDp() }
+
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
 		content = { paddingValues ->
@@ -46,7 +53,8 @@ fun HomeScreen(
 
 				FileContentDisplay(
 					content = fileContent,
-					fileSize = fileSize
+					fileSize = fileSize,
+					fileType = "txt"
 				)
 
 				Row(
@@ -122,13 +130,13 @@ fun HomeScreen(
 		},
 		bottomBar = {
 			OperationSelectionBar(
+				paddingValues =bottomPaddingInDp,
 				onEncryptClicked = onEncryptClicked,
 				onDecryptClicked = onDecryptClicked
 			)
 		}
 	)
 }
-
 
 @Preview(showBackground = true)
 @Composable

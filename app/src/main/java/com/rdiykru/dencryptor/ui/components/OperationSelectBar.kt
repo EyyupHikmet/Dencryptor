@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rdiykru.dencryptor.R
@@ -33,6 +34,7 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OperationSelectionBar(
+	paddingValues: Dp,
 	onEncryptClicked: () -> Unit,
 	onDecryptClicked: () -> Unit
 ) {
@@ -49,7 +51,7 @@ fun OperationSelectionBar(
 			)
 		},
 		modifier = Modifier
-			.padding(vertical = 16.dp, horizontal = 4.dp)
+			.padding(bottom = paddingValues)
 			.fillMaxWidth()
 	) {
 		tabTitles.forEachIndexed { index, title ->
@@ -109,6 +111,7 @@ fun FancyIndicator(color: Color, modifier: Modifier = Modifier) {
 @Composable
 fun OperationSelectionBarPreview() {
 	OperationSelectionBar(
+		2.dp,
 		onEncryptClicked = { },
 		onDecryptClicked = { }
 	)
