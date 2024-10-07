@@ -32,7 +32,10 @@ class MainActivity : ComponentActivity() {
 
 			DencryptorTheme {
 				HomeScreen(
-					openFilePicker = { openFilePicker() },
+					openFilePicker = {
+						openFilePicker()
+						viewModel.resetState()
+					},
 					homeState = homeState,
 					resetState = {
 						viewModel.resetState()

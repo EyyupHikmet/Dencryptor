@@ -54,12 +54,6 @@ class MainViewModel @Inject constructor() : ViewModel() {
 			val keyPair = RSA.generateKeyPair(keySize)
 
 			homeState.update { it.copy(rsaKeyPair = keyPair) }
-			homeState.update {
-				it.copy(
-					keyPairDisplay =
-					"Public Key: ${keyPair.publicKey.e}, ${keyPair.publicKey.n} \nPrivate Key: ${keyPair.privateKey.d}, ${keyPair.privateKey.n}"
-				)
-			}
 			homeState.update { it.copy(dencrypting = false) }
 		}
 	}
@@ -83,11 +77,6 @@ class MainViewModel @Inject constructor() : ViewModel() {
 				val encryptedMessage = RSA.encrypt(message, publicKey)
 				homeState.update {
 					it.copy(encryptedContent = encryptedMessage.toString(16))
-				}
-				homeState.update {
-					it.copy(
-						keyPairDisplay = "Public Key: ${publicKey.e}, ${publicKey.n} \nPrivate Key: ${keypair.privateKey.d}, ${keypair.privateKey.n}"
-					)
 				}
 			}
 
@@ -127,6 +116,5 @@ data class HomeState(
 	val fileSize: Int = 0,
 	val encryptedContent: String = "",
 	val decryptedContent: String = "",
-	val keyPairDisplay: String = "",
 	val rsaKeyPair: RSA.KeyPair? = null
 )
