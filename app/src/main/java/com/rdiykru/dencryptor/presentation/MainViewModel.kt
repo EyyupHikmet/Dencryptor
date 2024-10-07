@@ -47,7 +47,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
 
 			val fileSizeInBits = homeState.value.fileSize * 8
 			val keySize = when {
-				fileSizeInBits < 1024 -> 1024
+				fileSizeInBits < 2048 -> 2048
 				fileSizeInBits < 4096 -> 4096
 				else -> fileSizeInBits
 			}
@@ -58,7 +58,6 @@ class MainViewModel @Inject constructor() : ViewModel() {
 				it.copy(
 					keyPairDisplay =
 					"Public Key: ${keyPair.publicKey.e}, ${keyPair.publicKey.n} \nPrivate Key: ${keyPair.privateKey.d}, ${keyPair.privateKey.n}"
-
 				)
 			}
 			homeState.update { it.copy(dencrypting = false) }
