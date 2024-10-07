@@ -1,5 +1,6 @@
 package com.rdiykru.dencryptor.ui.components
 
+import android.content.res.Configuration
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -29,6 +30,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rdiykru.dencryptor.R
+import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -46,7 +48,7 @@ fun OperationSelectionBar(
 		selectedTabIndex = selectedTab,
 		indicator = {
 			FancyIndicator(
-				MaterialTheme.colorScheme.secondary,
+				MaterialTheme.colorScheme.onSurface,
 				Modifier.tabIndicatorOffset(selectedTab)
 			)
 		},
@@ -57,7 +59,7 @@ fun OperationSelectionBar(
 		tabTitles.forEachIndexed { index, title ->
 			val isSelected = selectedTab == index
 			val color =
-				if (isSelected) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary
+				if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
 			val icon = if (index == 0) R.drawable.locked else R.drawable.unlocked
 			val fontWeight = if (isSelected) FontWeight.Bold else FontWeight.SemiBold
 
@@ -107,12 +109,14 @@ fun FancyIndicator(color: Color, modifier: Modifier = Modifier) {
 	)
 }
 
-@Preview(showBackground = true)
+@Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun OperationSelectionBarPreview() {
-	OperationSelectionBar(
-		2.dp,
-		onEncryptClicked = { },
-		onDecryptClicked = { }
-	)
+	DencryptorTheme {
+		OperationSelectionBar(
+			2.dp,
+			onEncryptClicked = { },
+			onDecryptClicked = { }
+		)
+	}
 }

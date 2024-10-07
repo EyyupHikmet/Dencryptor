@@ -5,4 +5,6 @@
     <string name="file_content">Dosya İçeriği</string>
     <string name="file_size_byte_value">%1$s byte</string>
     <string name="open_file_selector">Dosya Seçim Ekranını Aç</string>
+    <string name="select_new_text_file">Yeni Dosya Seç</string>
+    <string name="clear_selected_content">Seçili İçeriği Temizle</string>
 </resources>

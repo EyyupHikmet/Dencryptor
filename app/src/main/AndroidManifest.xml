@@ -19,7 +19,7 @@
         android:theme="@style/Theme.Dencryptor"
         tools:targetApi="34">
         <activity
-            android:name=".MainActivity"
+            android:name=".presentation.MainActivity"
             android:exported="true"
             android:theme="@style/Theme.Dencryptor">
             <intent-filter>
