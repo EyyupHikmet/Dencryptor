@@ -7,4 +7,6 @@
     <string name="open_file_selector">Dosya Seçim Ekranını Aç</string>
     <string name="select_new_text_file">Yeni Dosya Seç</string>
     <string name="clear_selected_content">Seçili İçeriği Temizle</string>
+    <string name="public_key">Açık Anahtar</string>
+    <string name="private_key">Gizli Anahtar</string>
 </resources>

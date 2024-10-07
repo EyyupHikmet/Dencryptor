@@ -49,7 +49,7 @@ class MainViewModel @Inject constructor() : ViewModel() {
 			val keySize = when {
 				fileSizeInBits < 2048 -> 2048
 				fileSizeInBits < 4096 -> 4096
-				else -> fileSizeInBits
+				else -> fileSizeInBits + 20 // margin of error, not calculated
 			}
 			val keyPair = RSA.generateKeyPair(keySize)
 

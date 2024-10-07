@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -28,6 +29,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rdiykru.dencryptor.R
 import com.rdiykru.dencryptor.ui.components.FileContentDisplay
+import com.rdiykru.dencryptor.ui.components.KeyPair
 import com.rdiykru.dencryptor.ui.components.OperationSelectionBar
 import com.rdiykru.dencryptor.ui.components.SelectFileInfo
 
@@ -114,60 +116,51 @@ fun HomeScreen(
 								}
 							}
 
-							if (homeState.encryptedContent.isNotEmpty() && homeState.keyPairDisplay.isNotEmpty()) {
-								Row(
-									modifier = Modifier
-										.fillMaxSize()
-										.padding(top = 16.dp),
-									horizontalArrangement = Arrangement.spacedBy(16.dp)
-								) {
+							Column {
+								if (homeState.rsaKeyPair != null) {
 									Column(
 										modifier = Modifier
-											.weight(1f)
-											.padding(8.dp)
+											.fillMaxWidth()
+											.wrapContentHeight(),//TODO add clickable to expand or create a popup to show full key.
+										horizontalAlignment = Alignment.CenterHorizontally,
+										verticalArrangement = Arrangement.Center
 									) {
-										Text(
-											"Key Pair:",
-											style = MaterialTheme.typography.bodyLarge
-										)
-										Text(
-											text = homeState.keyPairDisplay,
-											style = MaterialTheme.typography.bodyMedium,
-											overflow = TextOverflow.Ellipsis
-										)
-									}
-
-									Column(
-										modifier = Modifier
-											.weight(1f)
-											.padding(8.dp)
-									) {
-										Text(
-											"Encrypted Content:",
-											style = MaterialTheme.typography.bodyLarge
-										)
-										Text(
-											text = homeState.encryptedContent,
-											style = MaterialTheme.typography.bodyMedium,
-											overflow = TextOverflow.Ellipsis
-										)
+										KeyPair(homeState.rsaKeyPair)
 									}
 								}
+							}
+							if (homeState.encryptedContent.isNotEmpty() && homeState.keyPairDisplay.isNotEmpty()) {
 
-								if (homeState.decryptedContent.isNotEmpty()) {
-									Column(
-										modifier = Modifier.padding(top = 8.dp)
-									) {
-										Text(
-											text = "Decrypted Content:",
-											style = MaterialTheme.typography.bodyLarge
-										)
-										Text(
-											text = homeState.decryptedContent,
-											style = MaterialTheme.typography.bodyMedium,
-											overflow = TextOverflow.Ellipsis
-										)
-									}
+								Column(
+									modifier = Modifier
+										.weight(1f)
+										.padding(8.dp)
+								) {
+									Text(
+										"Encrypted Content:",
+										style = MaterialTheme.typography.bodyLarge
+									)
+									Text(
+										text = homeState.encryptedContent,
+										style = MaterialTheme.typography.bodyMedium,
+										overflow = TextOverflow.Ellipsis
+									)
+								}
+							}
+
+							if (homeState.decryptedContent.isNotEmpty()) {
+								Column(
+									modifier = Modifier.padding(top = 8.dp)
+								) {
+									Text(
+										text = "Decrypted Content:",
+										style = MaterialTheme.typography.bodyLarge
+									)
+									Text(
+										text = homeState.decryptedContent,
+										style = MaterialTheme.typography.bodyMedium,
+										overflow = TextOverflow.Ellipsis
+									)
 								}
 							}
 						}
