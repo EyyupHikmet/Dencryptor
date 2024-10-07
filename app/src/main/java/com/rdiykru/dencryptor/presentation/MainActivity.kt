@@ -37,6 +37,9 @@ class MainActivity : ComponentActivity() {
 					resetState = {
 						viewModel.resetState()
 					},
+					createKey = {
+						viewModel.createDynamicSizedKeypair()
+					},
 					onEncryptClicked = { viewModel.encryptFileContent() },
 					onDecryptClicked = { viewModel.decryptFileContent() }
 				)

@@ -1,7 +1,9 @@
 package com.rdiykru.dencryptor.presentation
 
 import android.content.res.Configuration
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -33,6 +36,7 @@ fun HomeScreen(
 	openFilePicker: () -> Unit,
 	homeState: HomeState,
 	resetState: () -> Unit,
+	createKey: () -> Unit,
 	onEncryptClicked: () -> Unit,
 	onDecryptClicked: () -> Unit
 ) {
@@ -42,101 +46,129 @@ fun HomeScreen(
 	Scaffold(
 		modifier = Modifier.fillMaxSize(),
 		content = { paddingValues ->
-			if (homeState.fileContent.isEmpty()) {
-				Column(
-					modifier = Modifier.fillMaxSize(),
-					horizontalAlignment = Alignment.CenterHorizontally,
-					verticalArrangement = Arrangement.Center
-				) {
-					SelectFileInfo {
-						openFilePicker()
-					}
-				}
-			} else {
-				Column(
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(paddingValues)
-						.padding(16.dp)
-						.verticalScroll(rememberScrollState())
-				) {
-
-					TopButtons(
-						onFirstButtonClicked = openFilePicker,
-						onSecondButtonClicked = resetState
-					)
-					FileContentDisplay(
-						content = homeState.fileContent,
-						fileSize = homeState.fileSize,
-						fileType = "txt"
-					)
-
-					Row(
-						horizontalArrangement = Arrangement.spacedBy(16.dp),
-						modifier = Modifier.padding(top = 16.dp)
+			Box(modifier = Modifier.fillMaxSize()) {
+				if (homeState.dencrypting) {
+					Box(
+						modifier = Modifier
+							.fillMaxSize()
+							.background(MaterialTheme.colorScheme.background.copy(alpha = 0.5f)) // Adjust alpha as needed
 					) {
-						Button(onClick = { onEncryptClicked() }) {
-							Text("Encrypt File")
-						}
-
-						Button(
-							onClick = { onDecryptClicked() },
-							enabled = homeState.encryptedContent.isNotEmpty()
-						) {
-							Text("Decrypt File")
-						}
+						CircularProgressIndicator(
+							modifier = Modifier.align(Alignment.Center)
+						)
 					}
-
-					if (homeState.encryptedContent.isNotEmpty() && homeState.keyPairDisplay.isNotEmpty()) {
-						Row(
+				} else {
+					if (homeState.fileContent.isEmpty()) {
+						Column(
+							modifier = Modifier.fillMaxSize(),
+							horizontalAlignment = Alignment.CenterHorizontally,
+							verticalArrangement = Arrangement.Center
+						) {
+							SelectFileInfo {
+								openFilePicker()
+							}
+						}
+					} else {
+						Column(
 							modifier = Modifier
 								.fillMaxSize()
-								.padding(top = 16.dp),
-							horizontalArrangement = Arrangement.spacedBy(16.dp)
+								.padding(paddingValues)
+								.padding(16.dp)
+								.verticalScroll(rememberScrollState()),
+							horizontalAlignment = Alignment.CenterHorizontally
 						) {
-							Column(
-								modifier = Modifier
-									.weight(1f)
-									.padding(8.dp)
+
+							TopButtons(
+								onFirstButtonClicked = openFilePicker,
+								onSecondButtonClicked = resetState
+							)
+							FileContentDisplay(
+								content = homeState.fileContent,
+								fileSize = homeState.fileSize,
+								fileType = "txt"
+							)
+							Button(
+								onClick = { createKey() },
+								enabled = homeState.rsaKeyPair == null
 							) {
-								Text("Key Pair:", style = MaterialTheme.typography.bodyLarge)
-								Text(
-									text = homeState.keyPairDisplay,
-									style = MaterialTheme.typography.bodyMedium,
-									overflow = TextOverflow.Ellipsis
-								)
+								Text("Create Tailored Key")
+							}
+							Row(
+								horizontalArrangement = Arrangement.SpaceEvenly,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(top = 16.dp),
+							) {
+								Button(
+									onClick = { onEncryptClicked() },
+									enabled = homeState.rsaKeyPair != null
+								) {
+									Text("Encrypt File")
+								}
+
+								Button(
+									onClick = { onDecryptClicked() },
+									enabled = homeState.encryptedContent.isNotEmpty()
+								) {
+									Text("Decrypt File")
+								}
 							}
 
-							Column(
-								modifier = Modifier
-									.weight(1f)
-									.padding(8.dp)
-							) {
-								Text(
-									"Encrypted Content:",
-									style = MaterialTheme.typography.bodyLarge
-								)
-								Text(
-									text = homeState.encryptedContent,
-									style = MaterialTheme.typography.bodyMedium,
-									overflow = TextOverflow.Ellipsis
-								)
-							}
-						}
+							if (homeState.encryptedContent.isNotEmpty() && homeState.keyPairDisplay.isNotEmpty()) {
+								Row(
+									modifier = Modifier
+										.fillMaxSize()
+										.padding(top = 16.dp),
+									horizontalArrangement = Arrangement.spacedBy(16.dp)
+								) {
+									Column(
+										modifier = Modifier
+											.weight(1f)
+											.padding(8.dp)
+									) {
+										Text(
+											"Key Pair:",
+											style = MaterialTheme.typography.bodyLarge
+										)
+										Text(
+											text = homeState.keyPairDisplay,
+											style = MaterialTheme.typography.bodyMedium,
+											overflow = TextOverflow.Ellipsis
+										)
+									}
 
-						if (homeState.decryptedContent.isNotEmpty()) {
-							Column(
-								modifier = Modifier.padding(top = 8.dp)
-							) {
-								Text(
-									text = "Decrypted Content:",
-									style = MaterialTheme.typography.bodyLarge
-								)
-								Text(
-									text = homeState.decryptedContent,
-									style = MaterialTheme.typography.bodyMedium,
-									overflow = TextOverflow.Ellipsis
-								)
+									Column(
+										modifier = Modifier
+											.weight(1f)
+											.padding(8.dp)
+									) {
+										Text(
+											"Encrypted Content:",
+											style = MaterialTheme.typography.bodyLarge
+										)
+										Text(
+											text = homeState.encryptedContent,
+											style = MaterialTheme.typography.bodyMedium,
+											overflow = TextOverflow.Ellipsis
+										)
+									}
+								}
+
+								if (homeState.decryptedContent.isNotEmpty()) {
+									Column(
+										modifier = Modifier.padding(top = 8.dp)
+									) {
+										Text(
+											text = "Decrypted Content:",
+											style = MaterialTheme.typography.bodyLarge
+										)
+										Text(
+											text = homeState.decryptedContent,
+											style = MaterialTheme.typography.bodyMedium,
+											overflow = TextOverflow.Ellipsis
+										)
+									}
+								}
 							}
 						}
 					}
@@ -154,6 +186,7 @@ fun HomeScreen(
 		}
 	)
 }
+
 
 @Composable
 fun TopButtons(
@@ -186,8 +219,9 @@ private fun TopButtonsPreview(
 fun HomeScreenPreview() {
 	HomeScreen(
 		openFilePicker = {},
-		homeState = HomeState(),
+		homeState = HomeState(fileContent = "deneme"),
 		resetState = {},
+		createKey = {},
 		onEncryptClicked = {},
 		onDecryptClicked = {}
 	)

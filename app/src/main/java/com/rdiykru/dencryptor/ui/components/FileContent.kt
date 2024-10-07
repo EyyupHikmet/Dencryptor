@@ -32,7 +32,7 @@ import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
 fun FileContentDisplay(
 	content: String,
 	fileType: String,
-	fileSize: Long,
+	fileSize: Int,
 	modifier: Modifier = Modifier
 ) {
 	Column(
@@ -172,7 +172,7 @@ fun FileContentDisplayPreview() {
 	DencryptorTheme {
 		FileContentDisplay(
 			content = "This is a preview of the file content. The file may contain text data that is long enough to require scrolling.",
-			fileSize = 230L,
+			fileSize = 230,
 			fileType = "txt"
 		)
 	}
