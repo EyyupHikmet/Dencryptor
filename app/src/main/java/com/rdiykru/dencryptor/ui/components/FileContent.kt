@@ -20,10 +20,13 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.rdiykru.dencryptor.R
+import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
 
 @Composable
 fun FileContentDisplay(
@@ -47,7 +50,7 @@ fun FileContentDisplay(
 			Column(
 				modifier = Modifier
 					.background(
-						color = MaterialTheme.colorScheme.primaryContainer,
+						color = MaterialTheme.colorScheme.secondaryContainer,
 						shape = columnShape
 					)
 					.border(
@@ -69,15 +72,15 @@ fun FileContentDisplay(
 						.padding(2.dp),
 					textAlign = TextAlign.Center,
 					color = MaterialTheme.colorScheme.onPrimary,
-					text = "File Size",
+					text = stringResource(R.string.file_size),
 					style = MaterialTheme.typography.bodyLarge,
 					fontWeight = FontWeight.SemiBold
 				)
 				Text(
 					modifier = Modifier
 						.basicMarquee(),
-					text = "$fileSize bytes",
-					color = MaterialTheme.colorScheme.onPrimaryContainer,
+					text = stringResource(R.string.file_size_byte_value, fileSize),
+					color = MaterialTheme.colorScheme.onSecondaryContainer,
 					maxLines = 1,
 					style = MaterialTheme.typography.bodyLarge
 				)
@@ -87,7 +90,7 @@ fun FileContentDisplay(
 			Column(
 				modifier = Modifier
 					.background(
-						color = MaterialTheme.colorScheme.primaryContainer,
+						color = MaterialTheme.colorScheme.secondaryContainer,
 						shape = columnShape
 					)
 					.border(
@@ -110,14 +113,14 @@ fun FileContentDisplay(
 						.padding(2.dp),
 					textAlign = TextAlign.Center,
 					color = MaterialTheme.colorScheme.onPrimary,
-					text = "File Type",
+					text = stringResource(R.string.file_type),
 					style = MaterialTheme.typography.bodyLarge,
 					fontWeight = FontWeight.SemiBold
 				)
 				Text(
 					text = fileType,
 					style = MaterialTheme.typography.bodyLarge,
-					color = MaterialTheme.colorScheme.onPrimaryContainer,
+					color = MaterialTheme.colorScheme.onSecondaryContainer,
 				)
 			}
 		}
@@ -142,12 +145,12 @@ fun FileContentDisplay(
 					.fillMaxWidth()
 					.background(
 						shape = RoundedCornerShape(8.dp),
-						color = MaterialTheme.colorScheme.secondary
+						color = MaterialTheme.colorScheme.primary
 					)
 					.padding(vertical = 2.dp, horizontal = 16.dp),
 				textAlign = TextAlign.Start,
-				color = MaterialTheme.colorScheme.onSecondary,
-				text = "File Content",
+				color = MaterialTheme.colorScheme.onPrimary,
+				text = stringResource(R.string.file_content),
 				style = MaterialTheme.typography.bodyLarge,
 				fontWeight = FontWeight.SemiBold
 			)
@@ -166,9 +169,11 @@ fun FileContentDisplay(
 @Preview(showBackground = true)
 @Composable
 fun FileContentDisplayPreview() {
-	FileContentDisplay(
-		content = "This is a preview of the file content. The file may contain text data that is long enough to require scrolling.",
-		fileSize = 230L,
-		fileType = "txt"
-	)
+	DencryptorTheme {
+		FileContentDisplay(
+			content = "This is a preview of the file content. The file may contain text data that is long enough to require scrolling.",
+			fileSize = 230L,
+			fileType = "txt"
+		)
+	}
 }
