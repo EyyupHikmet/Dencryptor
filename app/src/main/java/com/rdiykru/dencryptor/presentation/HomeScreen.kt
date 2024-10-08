@@ -17,9 +17,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
@@ -131,19 +134,27 @@ fun HomeScreen(
 								.fillMaxWidth()
 								.padding(top = 16.dp),
 						) {
+							val encryptedContent = homeState.encryptedContent
+							val decryptedContent = homeState.decryptedContent
 							if (selectedTab == 0) {
 								Button(
 									onClick = { onEncryptClicked() },
-									enabled = homeState.rsaKeyPair != null
+									enabled = homeState.rsaKeyPair != null && encryptedContent.isEmpty()
 								) {
-									Text("Encrypt File")
+									if (encryptedContent.isNotEmpty()) {
+										Icon(Icons.Default.Check, "Tamamlandı")
+									}
+									Text(if (encryptedContent.isEmpty()) "İçeriği Şifrele" else "Şifreleme Tamamlandı")
 								}
 							} else {
 								Button(
 									onClick = { onDecryptClicked() },
-									enabled = homeState.rsaKeyPair != null
+									enabled = homeState.rsaKeyPair != null && decryptedContent.isEmpty()
 								) {
-									Text("Decrypt File")
+									if (decryptedContent.isNotEmpty()) {
+										Icon(Icons.Default.Check, "Tamamlandı")
+									}
+									Text(if (decryptedContent.isEmpty()) "İçeriği Çöz" else "Şifre Çözme Tamamlandı")
 								}
 							}
 						}
@@ -153,7 +164,7 @@ fun HomeScreen(
 								modifier = Modifier
 									.fillMaxWidth()
 									.padding(top = 8.dp),
-								title = "Encrypted Content:",
+								title = "Şifrelenmiş İçerik",
 								content = homeState.encryptedContent
 							)
 						}
@@ -163,7 +174,7 @@ fun HomeScreen(
 								modifier = Modifier
 									.fillMaxWidth()
 									.padding(top = 8.dp),
-								title = "Decrypted Content:",
+								title = "Şifresi Çözülmüş İçerik",
 								content = homeState.decryptedContent
 							)
 						}
