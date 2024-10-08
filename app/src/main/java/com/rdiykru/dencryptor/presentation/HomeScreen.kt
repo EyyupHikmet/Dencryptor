@@ -45,7 +45,7 @@ import com.rdiykru.dencryptor.R
 import com.rdiykru.dencryptor.core.extensions.Formatters.size
 import com.rdiykru.dencryptor.ui.components.DencryptedContent
 import com.rdiykru.dencryptor.ui.components.FileContentDisplay
-import com.rdiykru.dencryptor.ui.components.KeyCreationBottomSheet
+import com.rdiykru.dencryptor.ui.components.FullScreenKeyCreationDialog
 import com.rdiykru.dencryptor.ui.components.OperationSelectionBar
 import com.rdiykru.dencryptor.ui.components.SelectFileInfo
 import com.rdiykru.dencryptor.ui.components.SelectedKeyPair
@@ -207,9 +207,8 @@ fun HomeScreen(
 		}
 	)
 
-	KeyCreationBottomSheet(
-		openBottomSheet = openBottomSheet,
-		bottomSheetState = bottomSheetState,
+	FullScreenKeyCreationDialog(
+		openDialog = openBottomSheet,
 		onCreateClicked = createKey,
 		homeState = homeState,
 		onDismiss = { openBottomSheet = false }
