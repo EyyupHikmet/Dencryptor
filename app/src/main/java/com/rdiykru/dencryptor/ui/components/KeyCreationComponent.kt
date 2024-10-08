@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.rdiykru.dencryptor.presentation.HomeState
 import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
 
@@ -57,7 +58,7 @@ fun FullScreenKeyCreationDialog(
 
 		val tailoredSize = if (homeState.fileSize * 8 < 2048) 2048 / 8 else (homeState.fileSize + 3)
 
-		Dialog(onDismissRequest = { onDismiss() }) {
+		Dialog(onDismissRequest = { onDismiss() }, properties = DialogProperties(usePlatformDefaultWidth = false)) {
 			Column(
 				modifier = Modifier
 					.wrapContentHeight()
