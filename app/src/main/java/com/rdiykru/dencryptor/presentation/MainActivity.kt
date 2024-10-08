@@ -39,6 +39,12 @@ class MainActivity : ComponentActivity() {
 						openFilePicker()
 						viewModel.resetState()
 					},
+					getKeyPairList = {
+						viewModel.getKeyPairFileList()
+					},
+					selectKeyPairFile = {
+						viewModel.getKeyFile(it)
+					},
 					homeState = homeState,
 					resetState = {
 						viewModel.resetState()

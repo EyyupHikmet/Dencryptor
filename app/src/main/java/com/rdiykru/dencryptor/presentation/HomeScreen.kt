@@ -9,11 +9,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -25,9 +27,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberStandardBottomSheetState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -45,6 +46,7 @@ import com.rdiykru.dencryptor.R
 import com.rdiykru.dencryptor.core.extensions.Formatters.size
 import com.rdiykru.dencryptor.ui.components.DencryptedContent
 import com.rdiykru.dencryptor.ui.components.FileContentDisplay
+import com.rdiykru.dencryptor.ui.components.FileListComponent
 import com.rdiykru.dencryptor.ui.components.FullScreenKeyCreationDialog
 import com.rdiykru.dencryptor.ui.components.OperationSelectionBar
 import com.rdiykru.dencryptor.ui.components.SelectFileInfo
@@ -55,17 +57,21 @@ import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
 @Composable
 fun HomeScreen(
 	openFilePicker: () -> Unit,
+	getKeyPairList: () -> Unit,
+	selectKeyPairFile: (String) -> Unit,
 	homeState: HomeState,
 	resetState: () -> Unit,
 	createKey: (Int, String) -> Unit,
 	onEncryptClicked: () -> Unit,
 	onDecryptClicked: () -> Unit
 ) {
-	var openBottomSheet by rememberSaveable { mutableStateOf(false) }
+	var openKeyCreatorDialog by rememberSaveable { mutableStateOf(false) }
 	var selectedTab by remember { mutableIntStateOf(0) }
 
+	var openBottomSheet by rememberSaveable { mutableStateOf(false) }
+	val skipPartiallyExpanded by rememberSaveable { mutableStateOf(false) }
 	val bottomSheetState =
-		rememberStandardBottomSheetState(initialValue = SheetValue.Expanded)
+		rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)
 
 	val bottomPaddingInPixels = WindowInsets.navigationBars.getBottom(LocalDensity.current)
 	val bottomPaddingInDp = with(LocalDensity.current) { bottomPaddingInPixels.toDp() }
@@ -95,8 +101,10 @@ fun HomeScreen(
 						horizontalAlignment = Alignment.CenterHorizontally
 					) {
 
-						TopButtons(
+						DoubleButtons(
+							firstText = stringResource(R.string.select_new_text_file),
 							onFirstButtonClicked = openFilePicker,
+							secondText = stringResource(R.string.clear_selected_content),
 							onSecondButtonClicked = resetState
 						)
 						FileContentDisplay(
@@ -104,15 +112,28 @@ fun HomeScreen(
 							fileSize = homeState.fileSize,
 							fileType = "txt"
 						)
-						Button(
-							onClick = { openBottomSheet = !openBottomSheet },
-							enabled = homeState.rsaKeyPair == null
-						) {
-							Text(stringResource(R.string.create_keypair))
-						}
+						Row(modifier = Modifier.fillMaxWidth()) {
 
+							Button(
+								modifier = Modifier.weight(1f),
+								onClick = { openKeyCreatorDialog = !openKeyCreatorDialog },
+							) {
+								Text(stringResource(R.string.create_keypair))
+							}
+							Spacer(modifier = Modifier.size(4.dp))
+							Button(
+								modifier = Modifier.weight(1f),
+								onClick = {
+									getKeyPairList()
+									openBottomSheet = true
+								},
+								enabled = homeState.publicKey == null || homeState.privateKey == null
+							) {
+								Text("Anahtar Seç")
+							}
+						}
 						Column {
-							if (homeState.rsaKeyPair != null) {
+							if (homeState.publicKey != null) {
 								Column(
 									modifier = Modifier
 										.fillMaxWidth()
@@ -122,7 +143,7 @@ fun HomeScreen(
 								) {
 									SelectedKeyPair(
 										keyPairName = homeState.keyPairName,
-										keySize = homeState.rsaKeyPair.publicKey.size()
+										keySize = homeState.publicKey.size()
 									)
 								}
 							}
@@ -139,7 +160,7 @@ fun HomeScreen(
 							if (selectedTab == 0) {
 								Button(
 									onClick = { onEncryptClicked() },
-									enabled = homeState.rsaKeyPair != null && encryptedContent.isEmpty()
+									enabled = homeState.publicKey != null && encryptedContent.isEmpty()
 								) {
 									if (encryptedContent.isNotEmpty()) {
 										Icon(Icons.Default.Check, "Tamamlandı")
@@ -149,7 +170,7 @@ fun HomeScreen(
 							} else {
 								Button(
 									onClick = { onDecryptClicked() },
-									enabled = homeState.rsaKeyPair != null && decryptedContent.isEmpty()
+									enabled = homeState.privateKey != null && decryptedContent.isEmpty()
 								) {
 									if (decryptedContent.isNotEmpty()) {
 										Icon(Icons.Default.Check, "Tamamlandı")
@@ -207,37 +228,59 @@ fun HomeScreen(
 		}
 	)
 
+	if (homeState.fileList != null) {
+		FileListComponent(
+			openBottomSheet = openBottomSheet,
+			bottomSheetState = bottomSheetState,
+			fileList = homeState.fileList,
+			onItemClicked = { selectedFileName ->
+				selectKeyPairFile(selectedFileName)
+			},
+			onDismiss = {
+				openBottomSheet = false
+			}
+		)
+	}
+
 	FullScreenKeyCreationDialog(
-		openDialog = openBottomSheet,
+		openDialog = openKeyCreatorDialog,
 		onCreateClicked = createKey,
 		homeState = homeState,
-		onDismiss = { openBottomSheet = false }
+		onDismiss = { openKeyCreatorDialog = false }
 	)
 }
 
 @Composable
-fun TopButtons(
+fun DoubleButtons(
+	firstText: String,
 	onFirstButtonClicked: () -> Unit,
+	secondText: String,
 	onSecondButtonClicked: () -> Unit,
 ) {
 	Row(modifier = Modifier.fillMaxWidth()) {
 		Button(modifier = Modifier.weight(1f),
 			onClick = { onFirstButtonClicked() }) {
-			Text(stringResource(R.string.select_new_text_file))
+			Text(firstText)
 		}
+		Spacer(modifier = Modifier.size(4.dp))
 		Button(modifier = Modifier.weight(1f),
 			onClick = { onSecondButtonClicked() }) {
-			Text(stringResource(R.string.clear_selected_content))
+			Text(secondText)
 		}
 	}
 }
 
+
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
-private fun TopButtonsPreview(
+private fun DoubleButtonsPreview(
 ) {
 	DencryptorTheme {
-		TopButtons({}, {})
+		DoubleButtons(
+			stringResource(R.string.select_new_text_file),
+			{},
+			stringResource(R.string.clear_selected_content),
+			{})
 	}
 }
 
@@ -246,10 +289,11 @@ private fun TopButtonsPreview(
 fun HomeScreenPreview() {
 	HomeScreen(
 		openFilePicker = {},
+		getKeyPairList = {},
+		selectKeyPairFile = {},
 		homeState = HomeState(fileContent = "deneme"),
 		resetState = {},
 		createKey = { keySize: Int, keyPairName: String ->
-
 		},
 		onEncryptClicked = {},
 		onDecryptClicked = {}
