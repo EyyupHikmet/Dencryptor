@@ -50,17 +50,27 @@ object RSA {
 		return prime.isProbablePrime(100) // 100 rounds of certainty
 	}
 
-	fun encrypt(message: BigInteger, publicKey: PublicKey): BigInteger {
-		if (message >= publicKey.n) {
+	fun encrypt(message: String, publicKey: PublicKey): String {
+		val messageBytes = message.toByteArray(Charsets.UTF_8)
+		val messageBigInt = BigInteger(1, messageBytes) // Convert to BigInteger (positive)
+
+		if (messageBigInt >= publicKey.n) {
 			throw IllegalArgumentException("Message must be smaller than the modulus (n)")
 		}
-		return message.modPow(publicKey.e, publicKey.n)
+
+		val ciphertextBigInt = messageBigInt.modPow(publicKey.e, publicKey.n)
+		return ciphertextBigInt.toString(16) // Convert BigInteger to hex string for transmission
 	}
 
-	fun decrypt(ciphertext: BigInteger, privateKey: PrivateKey): BigInteger {
-		if (ciphertext >= privateKey.n) {
+	fun decrypt(ciphertextHex: String, privateKey: PrivateKey): String {
+		val ciphertextBigInt = BigInteger(ciphertextHex, 16) // Convert hex string to BigInteger
+
+		if (ciphertextBigInt >= privateKey.n) {
 			throw IllegalArgumentException("Ciphertext must be smaller than the modulus (n)")
 		}
-		return ciphertext.modPow(privateKey.d, privateKey.n)
+
+		val decryptedBigInt = ciphertextBigInt.modPow(privateKey.d, privateKey.n)
+		val decryptedBytes = decryptedBigInt.toByteArray()
+		return String(decryptedBytes, Charsets.UTF_8) // Convert bytes back to String
 	}
 }
