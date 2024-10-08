@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package com.rdiykru.dencryptor.presentation
 
 import android.content.res.Configuration
@@ -17,10 +19,18 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -30,20 +40,26 @@ import androidx.compose.ui.unit.dp
 import com.rdiykru.dencryptor.R
 import com.rdiykru.dencryptor.ui.components.DencryptedContent
 import com.rdiykru.dencryptor.ui.components.FileContentDisplay
+import com.rdiykru.dencryptor.ui.components.KeyCreationBottomSheet
 import com.rdiykru.dencryptor.ui.components.KeyPair
 import com.rdiykru.dencryptor.ui.components.OperationSelectionBar
 import com.rdiykru.dencryptor.ui.components.SelectFileInfo
 import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
 
+@ExperimentalMaterial3Api
 @Composable
 fun HomeScreen(
 	openFilePicker: () -> Unit,
 	homeState: HomeState,
 	resetState: () -> Unit,
-	createKey: () -> Unit,
+	createKey: (Int, String) -> Unit,
 	onEncryptClicked: () -> Unit,
 	onDecryptClicked: () -> Unit
 ) {
+	var openBottomSheet by rememberSaveable { mutableStateOf(false) }
+	val bottomSheetState =
+		rememberStandardBottomSheetState(initialValue = SheetValue.Expanded)
+
 	val bottomPaddingInPixels = WindowInsets.navigationBars.getBottom(LocalDensity.current)
 	val bottomPaddingInDp = with(LocalDensity.current) { bottomPaddingInPixels.toDp() }
 
@@ -82,10 +98,10 @@ fun HomeScreen(
 							fileType = "txt"
 						)
 						Button(
-							onClick = { createKey() },
+							onClick = { openBottomSheet = !openBottomSheet },
 							enabled = homeState.rsaKeyPair == null
 						) {
-							Text("Create Tailored Key")
+							Text(stringResource(R.string.create_keypair))
 						}
 						Row(
 							horizontalArrangement = Arrangement.SpaceEvenly,
@@ -169,6 +185,14 @@ fun HomeScreen(
 			}
 		}
 	)
+
+	KeyCreationBottomSheet(
+		openBottomSheet = openBottomSheet,
+		bottomSheetState = bottomSheetState,
+		onCreateClicked = createKey,
+		homeState = homeState,
+		onDismiss = { openBottomSheet = false }
+	)
 }
 
 @Composable
@@ -204,7 +228,9 @@ fun HomeScreenPreview() {
 		openFilePicker = {},
 		homeState = HomeState(fileContent = "deneme"),
 		resetState = {},
-		createKey = {},
+		createKey = {keySize: Int, keyPairName: String ->
+
+		},
 		onEncryptClicked = {},
 		onDecryptClicked = {}
 	)

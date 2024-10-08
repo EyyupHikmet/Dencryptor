@@ -34,14 +34,24 @@ fun KeyPair(keyPair: RSA.KeyPair) {
 			.fillMaxWidth()
 			.height(250.dp)
 	) {
-		KeyBody(modifier = Modifier.weight(1f), key = keyPair.publicKey.toString(), keySize = keyPair.publicKey.size())
+		KeyBody(
+			modifier = Modifier.weight(1f),
+			key = keyPair.publicKey.toString(),
+			type = stringResource(R.string.public_key),
+			keySize = keyPair.publicKey.size()
+		)
 		Spacer(modifier = Modifier.size(4.dp))
-		KeyBody(modifier = Modifier.weight(1f), key = keyPair.privateKey.toString(), keySize = keyPair.privateKey.size())
+		KeyBody(
+			modifier = Modifier.weight(1f),
+			key = keyPair.privateKey.toString(),
+			type = stringResource(R.string.private_key),
+			keySize = keyPair.privateKey.size()
+		)
 	}
 }
 
 @Composable
-private fun KeyBody(modifier: Modifier, key: String, keySize: Int) {
+private fun KeyBody(modifier: Modifier, type: String, key: String, keySize: Int) {
 	val shape = RoundedCornerShape(12.dp)
 
 	Column(
@@ -76,7 +86,7 @@ private fun KeyBody(modifier: Modifier, key: String, keySize: Int) {
 				.padding(2.dp),
 			textAlign = TextAlign.Center,
 			color = MaterialTheme.colorScheme.onPrimary,
-			text = stringResource(R.string.public_key),
+			text = type,
 			style = MaterialTheme.typography.bodyLarge,
 			fontWeight = FontWeight.SemiBold
 		)

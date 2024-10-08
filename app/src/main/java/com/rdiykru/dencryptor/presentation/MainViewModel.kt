@@ -6,6 +6,7 @@ import android.provider.OpenableColumns
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.rdiykru.dencryptor.core.encryption.rsa.RSA
+import com.rdiykru.dencryptor.core.file.FileOperationsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,9 +16,24 @@ import java.math.BigInteger
 import javax.inject.Inject
 
 @HiltViewModel
-class MainViewModel @Inject constructor() : ViewModel() {
+class MainViewModel @Inject constructor(
+	private val fileOperationsManager: FileOperationsManager
+) : ViewModel() {
 	var homeState = MutableStateFlow(HomeState())
 		private set
+
+	fun saveDecryptedFile(fileName: String, text: String) {
+		fileOperationsManager.saveDecryptedFile(fileName, text)
+	}
+
+	fun saveEncryptedFile(fileName: String, text: String) {
+		fileOperationsManager.saveEncryptedFile(fileName, text)
+	}
+
+	private fun saveKeyPairFile(fileName: String, keyPair: RSA.KeyPair) {
+		fileOperationsManager.saveKeyPairFile("${fileName}_Public", keyPair.publicKey.toString())
+		fileOperationsManager.saveKeyPairFile("${fileName}_Private", keyPair.privateKey.toString())
+	}
 
 	fun handleSelectedFile(uri: Uri, contentResolver: ContentResolver) {
 		viewModelScope.launch(Dispatchers.IO) {
@@ -41,18 +57,38 @@ class MainViewModel @Inject constructor() : ViewModel() {
 		}
 	}
 
-	fun createDynamicSizedKeypair() {
+	fun createKeyPair(keySize: Int, keyPairName: String) {
+		homeState.update { it.copy(keyPairName = keyPairName) }
+		if (keySize == homeState.value.fileSize) {
+			createDynamicSizedKeypair()
+		} else {
+			createStaticSizedKeypair(keySize)
+		}
+	}
+
+	private fun createStaticSizedKeypair(keySize: Int) {
+		viewModelScope.launch(Dispatchers.IO) {
+			homeState.update { it.copy(dencrypting = true) }
+
+			val keyPair = RSA.generateKeyPair(keySize * 8)
+
+			saveKeyPairFile(homeState.value.keyPairName, keyPair)
+			homeState.update { it.copy(rsaKeyPair = keyPair) }
+			homeState.update { it.copy(dencrypting = false) }
+		}
+	}
+
+	private fun createDynamicSizedKeypair() {
 		viewModelScope.launch(Dispatchers.IO) {
 			homeState.update { it.copy(dencrypting = true) }
 
 			val fileSizeInBits = homeState.value.fileSize * 8
 			val keySize = when {
 				fileSizeInBits < 2048 -> 2048
-				fileSizeInBits < 4096 -> 4096
-				else -> fileSizeInBits + 20 // margin of error, not calculated
+				else -> fileSizeInBits + 24 // margin of error, not calculated
 			}
 			val keyPair = RSA.generateKeyPair(keySize)
-
+			saveKeyPairFile(homeState.value.keyPairName, keyPair)
 			homeState.update { it.copy(rsaKeyPair = keyPair) }
 			homeState.update { it.copy(dencrypting = false) }
 		}
@@ -116,5 +152,6 @@ data class HomeState(
 	val fileSize: Int = 0,
 	val encryptedContent: String = "",
 	val decryptedContent: String = "",
-	val rsaKeyPair: RSA.KeyPair? = null
+	val rsaKeyPair: RSA.KeyPair? = null,
+	val keyPairName: String = ""
 )

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3Api::class)
+
 package com.rdiykru.dencryptor.presentation
 
 import android.content.Intent
@@ -8,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
@@ -40,8 +43,8 @@ class MainActivity : ComponentActivity() {
 					resetState = {
 						viewModel.resetState()
 					},
-					createKey = {
-						viewModel.createDynamicSizedKeypair()
+					createKey = { keySize: Int, keyPairName: String ->
+						viewModel.createKeyPair(keySize, keyPairName)
 					},
 					onEncryptClicked = { viewModel.encryptFileContent() },
 					onDecryptClicked = { viewModel.decryptFileContent() }

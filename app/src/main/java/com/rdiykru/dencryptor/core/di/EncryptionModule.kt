@@ -1,4 +1,4 @@
-package com.rdiykru.dencryptor.core.encryption.di
+package com.rdiykru.dencryptor.core.di
 
 import com.rdiykru.dencryptor.core.encryption.rsa.RSA
 import dagger.Module

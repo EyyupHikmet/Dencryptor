@@ -9,4 +9,5 @@
     <string name="clear_selected_content">Seçili İçeriği Temizle</string>
     <string name="public_key">Açık Anahtar</string>
     <string name="private_key">Gizli Anahtar</string>
+    <string name="create_keypair">Anahtar Oluştur</string>
 </resources>
