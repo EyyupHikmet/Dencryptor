@@ -19,8 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -39,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -48,6 +47,7 @@ import com.rdiykru.dencryptor.ui.components.DencryptedContent
 import com.rdiykru.dencryptor.ui.components.FileContentDisplay
 import com.rdiykru.dencryptor.ui.components.FileListComponent
 import com.rdiykru.dencryptor.ui.components.FullScreenKeyCreationDialog
+import com.rdiykru.dencryptor.ui.components.InputDialog
 import com.rdiykru.dencryptor.ui.components.OperationSelectionBar
 import com.rdiykru.dencryptor.ui.components.SelectFileInfo
 import com.rdiykru.dencryptor.ui.components.SelectedKeyPair
@@ -58,17 +58,26 @@ import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
 fun HomeScreen(
 	openFilePicker: () -> Unit,
 	getKeyPairList: () -> Unit,
+	getLocalEncryptedList: () -> Unit,
+	getLocalDecryptedList: () -> Unit,
 	selectKeyPairFile: (String) -> Unit,
+	selectLocalEncryptedFile: (String) -> Unit,
+	selectLocalDecryptedFile: (String) -> Unit,
 	homeState: HomeState,
-	resetState: () -> Unit,
 	createKey: (Int, String) -> Unit,
+	saveEncryptedFile: (String) -> Unit,
+	saveDecryptedFile: (String) -> Unit,
 	onEncryptClicked: () -> Unit,
 	onDecryptClicked: () -> Unit
 ) {
 	var openKeyCreatorDialog by rememberSaveable { mutableStateOf(false) }
+	var openFileCreatorDialog by remember { mutableStateOf(false) }
+
 	var selectedTab by remember { mutableIntStateOf(0) }
 
-	var openBottomSheet by rememberSaveable { mutableStateOf(false) }
+	var openKeyBottomSheet by rememberSaveable { mutableStateOf(false) }
+	var openEncryptedBottomSheet by rememberSaveable { mutableStateOf(false) }
+	var openDecryptedBottomSheet by rememberSaveable { mutableStateOf(false) }
 	val skipPartiallyExpanded by rememberSaveable { mutableStateOf(false) }
 	val bottomSheetState =
 		rememberModalBottomSheetState(skipPartiallyExpanded = skipPartiallyExpanded)
@@ -102,10 +111,18 @@ fun HomeScreen(
 					) {
 
 						DoubleButtons(
-							firstText = stringResource(R.string.select_new_text_file),
+							firstText = stringResource(R.string.select_external_text_file),
 							onFirstButtonClicked = openFilePicker,
-							secondText = stringResource(R.string.clear_selected_content),
-							onSecondButtonClicked = resetState
+							secondText = stringResource(R.string.select_local_text_file),
+							onSecondButtonClicked = {
+								if (selectedTab == 0) {
+									getLocalDecryptedList()
+									openDecryptedBottomSheet = true
+								} else {
+									getLocalEncryptedList()
+									openEncryptedBottomSheet = true
+								}
+							}
 						)
 						FileContentDisplay(
 							content = homeState.fileContent,
@@ -125,11 +142,10 @@ fun HomeScreen(
 								modifier = Modifier.weight(1f),
 								onClick = {
 									getKeyPairList()
-									openBottomSheet = true
+									openKeyBottomSheet = true
 								},
-								enabled = homeState.publicKey == null || homeState.privateKey == null
 							) {
-								Text("Anahtar Seç")
+								Text("Yerel Anahtar Seç")
 							}
 						}
 						Column {
@@ -155,48 +171,60 @@ fun HomeScreen(
 								.fillMaxWidth()
 								.padding(top = 16.dp),
 						) {
-							val encryptedContent = homeState.encryptedContent
+							val encryptedContent = homeState.encryptedContent?.toString(16)
 							val decryptedContent = homeState.decryptedContent
 							if (selectedTab == 0) {
 								Button(
 									onClick = { onEncryptClicked() },
-									enabled = homeState.publicKey != null && encryptedContent.isEmpty()
+									enabled = homeState.publicKey != null
 								) {
-									if (encryptedContent.isNotEmpty()) {
-										Icon(Icons.Default.Check, "Tamamlandı")
+									Text("İçeriği Şifrele")
+								}
+								if (encryptedContent != null) {
+									Button(
+										onClick = { openFileCreatorDialog = true },
+									) {
+										Icon(painterResource(R.drawable.save), "Tamamlandı")
+
+										Text("Şifreli İçeriği Kaydet")
 									}
-									Text(if (encryptedContent.isEmpty()) "İçeriği Şifrele" else "Şifreleme Tamamlandı")
 								}
 							} else {
 								Button(
 									onClick = { onDecryptClicked() },
-									enabled = homeState.privateKey != null && decryptedContent.isEmpty()
+									enabled = homeState.privateKey != null
 								) {
-									if (decryptedContent.isNotEmpty()) {
-										Icon(Icons.Default.Check, "Tamamlandı")
+									Text("İçeriği Çöz")
+								}
+								if (decryptedContent != null) {
+									Button(
+										onClick = { openFileCreatorDialog = true },
+									) {
+										Icon(painterResource(R.drawable.save), "Tamamlandı")
+
+										Text("Çözülmüş İçeriği Kaydet")
 									}
-									Text(if (decryptedContent.isEmpty()) "İçeriği Çöz" else "Şifre Çözme Tamamlandı")
 								}
 							}
 						}
 
-						if (homeState.encryptedContent.isNotEmpty() && selectedTab == 0) {
+						if (homeState.encryptedContent != null && selectedTab == 0) {
 							DencryptedContent(
 								modifier = Modifier
 									.fillMaxWidth()
 									.padding(top = 8.dp),
 								title = "Şifrelenmiş İçerik",
-								content = homeState.encryptedContent
+								content = homeState.encryptedContent.toString(16)
 							)
 						}
 
-						if (homeState.decryptedContent.isNotEmpty() && selectedTab == 1) {
+						if (homeState.decryptedContent != null && selectedTab == 1) {
 							DencryptedContent(
 								modifier = Modifier
 									.fillMaxWidth()
 									.padding(top = 8.dp),
 								title = "Şifresi Çözülmüş İçerik",
-								content = homeState.decryptedContent
+								content = homeState.decryptedContent.toString(16)
 							)
 						}
 					}
@@ -230,14 +258,36 @@ fun HomeScreen(
 
 	if (homeState.fileList != null) {
 		FileListComponent(
-			openBottomSheet = openBottomSheet,
+			openBottomSheet = openKeyBottomSheet,
 			bottomSheetState = bottomSheetState,
 			fileList = homeState.fileList,
 			onItemClicked = { selectedFileName ->
 				selectKeyPairFile(selectedFileName)
 			},
 			onDismiss = {
-				openBottomSheet = false
+				openKeyBottomSheet = false
+			}
+		)
+		FileListComponent(
+			openBottomSheet = openEncryptedBottomSheet,
+			bottomSheetState = bottomSheetState,
+			fileList = homeState.fileList,
+			onItemClicked = { selectedFileName ->
+				selectLocalEncryptedFile(selectedFileName)
+			},
+			onDismiss = {
+				openEncryptedBottomSheet = false
+			}
+		)
+		FileListComponent(
+			openBottomSheet = openDecryptedBottomSheet,
+			bottomSheetState = bottomSheetState,
+			fileList = homeState.fileList,
+			onItemClicked = { selectedFileName ->
+				selectLocalDecryptedFile(selectedFileName)
+			},
+			onDismiss = {
+				openDecryptedBottomSheet = false
 			}
 		)
 	}
@@ -247,6 +297,19 @@ fun HomeScreen(
 		onCreateClicked = createKey,
 		homeState = homeState,
 		onDismiss = { openKeyCreatorDialog = false }
+	)
+
+	InputDialog(
+		openDialog = openFileCreatorDialog,
+		onDismiss = { openFileCreatorDialog = false },
+		onSave = { input ->
+			if (selectedTab == 0) {
+				saveEncryptedFile(input)
+			} else {
+				saveDecryptedFile(input)
+			}
+			openFileCreatorDialog = false
+		}
 	)
 }
 
@@ -277,9 +340,9 @@ private fun DoubleButtonsPreview(
 ) {
 	DencryptorTheme {
 		DoubleButtons(
-			stringResource(R.string.select_new_text_file),
+			stringResource(R.string.select_external_text_file),
 			{},
-			stringResource(R.string.clear_selected_content),
+			stringResource(R.string.select_local_text_file),
 			{})
 	}
 }
@@ -292,9 +355,14 @@ fun HomeScreenPreview() {
 		getKeyPairList = {},
 		selectKeyPairFile = {},
 		homeState = HomeState(fileContent = "deneme"),
-		resetState = {},
 		createKey = { keySize: Int, keyPairName: String ->
 		},
+		selectLocalDecryptedFile = {},
+		selectLocalEncryptedFile = {},
+		getLocalDecryptedList = {},
+		getLocalEncryptedList = {},
+		saveDecryptedFile = {},
+		saveEncryptedFile = {},
 		onEncryptClicked = {},
 		onDecryptClicked = {}
 	)

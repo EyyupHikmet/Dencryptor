@@ -15,7 +15,6 @@ class FileOperationsManager(private val context: Context) {
 		private const val DECRYPTED_FOLDER = "Decrypted"
 		private const val ENCRYPTED_FOLDER = "Encrypted"
 		private const val KEY_PAIR_FOLDER = "KeyPair"
-
 	}
 
 	// Save methods

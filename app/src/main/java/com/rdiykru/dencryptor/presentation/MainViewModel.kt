@@ -10,10 +10,14 @@ import com.rdiykru.dencryptor.core.encryption.rsa.RSA
 import com.rdiykru.dencryptor.core.extensions.Formatters.toPrivateKey
 import com.rdiykru.dencryptor.core.extensions.Formatters.toPublicKey
 import com.rdiykru.dencryptor.core.extensions.Formatters.toStringFormat
+import com.rdiykru.dencryptor.core.extensions.sendEvent
 import com.rdiykru.dencryptor.core.file.FileOperationsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.math.BigInteger
@@ -23,6 +27,10 @@ import javax.inject.Inject
 class MainViewModel @Inject constructor(
 	private val fileOperationsManager: FileOperationsManager
 ) : ViewModel() {
+
+	private val _homeEvents = Channel<HomeEvent>(Channel.BUFFERED)
+	val homeEvents: Flow<HomeEvent> = _homeEvents.receiveAsFlow()
+
 	var homeState = MutableStateFlow(HomeState())
 		private set
 
@@ -41,6 +49,26 @@ class MainViewModel @Inject constructor(
 				Log.d(TAG, "getKeyFile: Private key retrieved")
 			}
 		}
+		resetFileList()
+	}
+
+	fun getEncryptFile(fileName: String) {
+		Log.d(TAG, "getEncryptFile: fileName = $fileName")
+		fileOperationsManager.readEncryptedFile(fileName)?.let { fileContent ->
+			homeState.update { it.copy(fileContent = fileContent) }
+			homeState.update { it.copy(fileSize = fileContent.toByteArray().size) }
+		}
+		resetFileList()
+	}
+
+	fun getDecryptFile(fileName: String) {
+		Log.d(TAG, "getDecryptFile: fileName = $fileName")
+		fileOperationsManager.readDecryptedFile(fileName)?.let { fileContent ->
+			homeState.update { it.copy(fileContent = fileContent) }
+			homeState.update { it.copy(fileSize = fileContent.toByteArray().size) }
+			Log.d(TAG, "getDecryptFile: Public key retrieved")
+		}
+		resetFileList()
 	}
 
 	fun getKeyPairFileList() {
@@ -58,20 +86,37 @@ class MainViewModel @Inject constructor(
 		homeState.update { it.copy(fileList = fileOperationsManager.getDecryptedFileList()) }
 	}
 
-	fun saveDecryptedFile(fileName: String, text: String) {
+	fun saveDecryptedFile(fileName: String) {
 		Log.d(TAG, "saveDecryptedFile: fileName = $fileName")
-		fileOperationsManager.saveDecryptedFile(fileName, text)
+		homeState.value.decryptedContent?.let {
+			fileOperationsManager.saveDecryptedFile(
+				fileName,
+				it.toString(16)
+			)
+		}
 	}
 
-	fun saveEncryptedFile(fileName: String, text: String) {
+	fun saveEncryptedFile(fileName: String) {
 		Log.d(TAG, "saveEncryptedFile: fileName = $fileName")
-		fileOperationsManager.saveEncryptedFile(fileName, text)
+		homeState.value.encryptedContent?.let {
+			fileOperationsManager.saveEncryptedFile(
+				fileName,
+				it.toString(16)
+			)
+		}
+
 	}
 
 	private fun saveKeyPairFile(fileName: String, keyPair: RSA.KeyPair) {
 		Log.d(TAG, "saveKeyPairFile: fileName = $fileName")
-		fileOperationsManager.saveKeyPairFile("${fileName}_Public", keyPair.publicKey.toStringFormat())
-		fileOperationsManager.saveKeyPairFile("${fileName}_Private", keyPair.privateKey.toStringFormat())
+		fileOperationsManager.saveKeyPairFile(
+			"${fileName}_Public",
+			keyPair.publicKey.toStringFormat()
+		)
+		fileOperationsManager.saveKeyPairFile(
+			"${fileName}_Private",
+			keyPair.privateKey.toStringFormat()
+		)
 	}
 
 	fun handleSelectedFile(uri: Uri, contentResolver: ContentResolver) {
@@ -91,7 +136,10 @@ class MainViewModel @Inject constructor(
 			contentResolver.openInputStream(uri)?.use { inputStream ->
 				val byteArray = inputStream.readBytes()
 				homeState.update { it.copy(fileContent = String(byteArray)) }
-				Log.d(TAG, "handleSelectedFile: fileContent = ${homeState.value.fileContent.take(100)}") // Log first 100 chars
+				Log.d(
+					TAG,
+					"handleSelectedFile: fileContent = ${homeState.value.fileContent.take(100)}"
+				) // Log first 100 chars
 			} ?: run {
 				homeState.update { it.copy(fileContent = "Failed to open file") }
 				Log.e(TAG, "handleSelectedFile: Failed to open file")
@@ -153,16 +201,19 @@ class MainViewModel @Inject constructor(
 				Log.d(TAG, "encryptFileContent: message = $message")
 
 				if (message >= publicKey.n) {
-					homeState.update { it.copy(encryptedContent = "File is too large to encrypt directly with RSA.") }
+					homeState.update { it.copy(encryptedContent = BigInteger(byteArrayOf())) }
 					homeState.update { it.copy(dencrypting = false) }
 					return@launch
 				}
 
 				val encryptedMessage = RSA.encrypt(message, publicKey)
 				homeState.update {
-					it.copy(encryptedContent = encryptedMessage.toString(16))
+					it.copy(encryptedContent = encryptedMessage)
 				}
-				Log.d(TAG, "encryptFileContent: encryptedContent = ${encryptedMessage.toString(16)}")
+				Log.d(
+					TAG,
+					"encryptFileContent: encryptedContent = ${encryptedMessage.toString(16)}"
+				)
 			}
 			homeState.update { it.copy(dencrypting = false) }
 		}
@@ -173,16 +224,54 @@ class MainViewModel @Inject constructor(
 		viewModelScope.launch {
 			homeState.update { it.copy(dencrypting = true) }
 			val privateKey = homeState.value.privateKey
+
 			if (privateKey != null) {
 				try {
+					// Convert file content to a BigInteger
 					val message = BigInteger(homeState.value.fileContent.toByteArray())
+
+					// Decrypt the message
 					val decryptedMessage = RSA.decrypt(message, privateKey)
-					homeState.update { it.copy(decryptedContent = String(decryptedMessage.toByteArray())) }
-					Log.d(TAG, "decryptFileContent: decryptedContent = ${homeState.value.decryptedContent}")
+
+					// Check if decryption was successful
+					homeState.update { it.copy(decryptedContent = decryptedMessage) }
+					Log.d(
+						TAG,
+						"decryptFileContent: decryptedContent = ${homeState.value.decryptedContent}"
+					)
 				} catch (e: NumberFormatException) {
-					homeState.update { it.copy(decryptedContent = "Failed to decrypt: Invalid encrypted data format") }
+					sendHomeEvent(
+						HomeEvent.ShowErrorMessage(
+							"Şifre Çözme Başarısız: Geçersiz Şifreli Veri Formatı"
+						)
+					)
+					homeState.update { it.copy(decryptedContent = null) }
+					Log.e(TAG, "decryptFileContent: ${e.message}", e)
+				} catch (e: IllegalArgumentException) {
+					// Handle case where ciphertext is too large
+					sendHomeEvent(
+						HomeEvent.ShowErrorMessage(
+							"Şifre Çözme Başarısız: ${e.message}"
+						)
+					)
+					homeState.update { it.copy(decryptedContent =null) }
+					Log.e(TAG, "decryptFileContent: ${e.message}", e)
+				} catch (e: Exception) {
+					// Handle any other exceptions that might occur
+					sendHomeEvent(
+						HomeEvent.ShowErrorMessage(
+							"Şifre Çözme Başarısız: Beklenmedik bir hata oluştu."
+						)
+					)
+					homeState.update { it.copy(decryptedContent = null) }
 					Log.e(TAG, "decryptFileContent: ${e.message}", e)
 				}
+			} else {
+				sendHomeEvent(
+					HomeEvent.ShowErrorMessage(
+						"Özel anahtar mevcut değil."
+					)
+				)
 			}
 			homeState.update { it.copy(dencrypting = false) }
 		}
@@ -194,7 +283,12 @@ class MainViewModel @Inject constructor(
 		homeState.update { it.copy(publicKey = keyPair.publicKey) }
 	}
 
-	fun resetFileList() {
+
+	suspend fun sendHomeEvent(event: HomeEvent) {
+		sendEvent(_homeEvents, event, TAG)
+	}
+
+	private fun resetFileList() {
 		Log.d(TAG, "resetFileList")
 		homeState.update { it.copy(fileList = null) }
 	}
@@ -210,9 +304,14 @@ data class HomeState(
 	val fileContent: String = "",
 	val fileList: List<String>? = listOf(),
 	val fileSize: Int = 0,
-	val encryptedContent: String = "",
-	val decryptedContent: String = "",
+	val encryptedContent: BigInteger? = null,
+	val decryptedContent: BigInteger? = null,
 	val publicKey: RSA.PublicKey? = null,
 	val privateKey: RSA.PrivateKey? = null,
 	val keyPairName: String = ""
 )
+
+sealed interface HomeEvent {
+	data class ShowErrorMessage(val error: String) : HomeEvent
+	data class ShowSuccessMessage(val success: String) : HomeEvent
+}

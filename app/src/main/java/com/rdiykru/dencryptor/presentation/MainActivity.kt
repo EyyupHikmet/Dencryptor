@@ -46,12 +46,15 @@ class MainActivity : ComponentActivity() {
 						viewModel.getKeyFile(it)
 					},
 					homeState = homeState,
-					resetState = {
-						viewModel.resetState()
-					},
 					createKey = { keySize: Int, keyPairName: String ->
 						viewModel.createKeyPair(keySize, keyPairName)
 					},
+					getLocalDecryptedList = { viewModel.getDecryptedFileList() },
+					getLocalEncryptedList = { viewModel.getEncryptedFileList() },
+					selectLocalEncryptedFile = { viewModel.getEncryptFile(it) },
+					selectLocalDecryptedFile = { viewModel.getDecryptFile(it) },
+					saveEncryptedFile = { viewModel.saveEncryptedFile(it) },
+					saveDecryptedFile = { viewModel.saveDecryptedFile(it) },
 					onEncryptClicked = { viewModel.encryptFileContent() },
 					onDecryptClicked = { viewModel.decryptFileContent() }
 				)
