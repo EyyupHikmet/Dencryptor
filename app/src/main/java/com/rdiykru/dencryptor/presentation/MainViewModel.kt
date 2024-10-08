@@ -120,7 +120,6 @@ class MainViewModel @Inject constructor(
 		}
 	}
 
-	// Decrypt the file content
 	fun decryptFileContent() {
 		viewModelScope.launch {
 			homeState.update { it.copy(dencrypting = true) }
@@ -128,8 +127,10 @@ class MainViewModel @Inject constructor(
 			val keypair = homeState.value.rsaKeyPair
 			if (keypair != null) {
 				try {
-					val encryptedMessage = BigInteger(homeState.value.encryptedContent, 16)
-					val decryptedMessage = RSA.decrypt(encryptedMessage, keypair.privateKey)
+					val privateKey = keypair.privateKey
+					val message = BigInteger(homeState.value.fileContent.toByteArray())
+
+					val decryptedMessage = RSA.decrypt(message, privateKey)
 					homeState.update { it.copy(decryptedContent = String(decryptedMessage.toByteArray())) }
 				} catch (e: NumberFormatException) {
 					homeState.update { it.copy(decryptedContent = "Failed to decrypt: Invalid encrypted data format") }
@@ -140,7 +141,6 @@ class MainViewModel @Inject constructor(
 		}
 	}
 
-	// Reset the state
 	fun resetState() {
 		homeState.update { HomeState() }
 	}

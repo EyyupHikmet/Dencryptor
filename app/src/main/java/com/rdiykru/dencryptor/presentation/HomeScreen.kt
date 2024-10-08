@@ -24,11 +24,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberStandardBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -38,12 +39,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rdiykru.dencryptor.R
+import com.rdiykru.dencryptor.core.extensions.Formatters.size
 import com.rdiykru.dencryptor.ui.components.DencryptedContent
 import com.rdiykru.dencryptor.ui.components.FileContentDisplay
 import com.rdiykru.dencryptor.ui.components.KeyCreationBottomSheet
-import com.rdiykru.dencryptor.ui.components.KeyPair
 import com.rdiykru.dencryptor.ui.components.OperationSelectionBar
 import com.rdiykru.dencryptor.ui.components.SelectFileInfo
+import com.rdiykru.dencryptor.ui.components.SelectedKeyPair
 import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
 
 @ExperimentalMaterial3Api
@@ -57,6 +59,8 @@ fun HomeScreen(
 	onDecryptClicked: () -> Unit
 ) {
 	var openBottomSheet by rememberSaveable { mutableStateOf(false) }
+	var selectedTab by remember { mutableIntStateOf(0) }
+
 	val bottomSheetState =
 		rememberStandardBottomSheetState(initialValue = SheetValue.Expanded)
 
@@ -103,26 +107,6 @@ fun HomeScreen(
 						) {
 							Text(stringResource(R.string.create_keypair))
 						}
-						Row(
-							horizontalArrangement = Arrangement.SpaceEvenly,
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(top = 16.dp),
-						) {
-							Button(
-								onClick = { onEncryptClicked() },
-								enabled = homeState.rsaKeyPair != null
-							) {
-								Text("Encrypt File")
-							}
-
-							Button(
-								onClick = { onDecryptClicked() },
-								enabled = homeState.encryptedContent.isNotEmpty()
-							) {
-								Text("Decrypt File")
-							}
-						}
 
 						Column {
 							if (homeState.rsaKeyPair != null) {
@@ -133,12 +117,38 @@ fun HomeScreen(
 									horizontalAlignment = Alignment.CenterHorizontally,
 									verticalArrangement = Arrangement.Center
 								) {
-									KeyPair(homeState.rsaKeyPair)
+									SelectedKeyPair(
+										keyPairName = homeState.keyPairName,
+										keySize = homeState.rsaKeyPair.publicKey.size()
+									)
 								}
 							}
 						}
 
-						if (homeState.encryptedContent.isNotEmpty()) {
+						Row(
+							horizontalArrangement = Arrangement.SpaceEvenly,
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(top = 16.dp),
+						) {
+							if (selectedTab == 0) {
+								Button(
+									onClick = { onEncryptClicked() },
+									enabled = homeState.rsaKeyPair != null
+								) {
+									Text("Encrypt File")
+								}
+							} else {
+								Button(
+									onClick = { onDecryptClicked() },
+									enabled = homeState.rsaKeyPair != null
+								) {
+									Text("Decrypt File")
+								}
+							}
+						}
+
+						if (homeState.encryptedContent.isNotEmpty() && selectedTab == 0) {
 							DencryptedContent(
 								modifier = Modifier
 									.fillMaxWidth()
@@ -148,7 +158,7 @@ fun HomeScreen(
 							)
 						}
 
-						if (homeState.decryptedContent.isNotEmpty()) {
+						if (homeState.decryptedContent.isNotEmpty() && selectedTab == 1) {
 							DencryptedContent(
 								modifier = Modifier
 									.fillMaxWidth()
@@ -179,8 +189,8 @@ fun HomeScreen(
 			if (homeState.fileContent.isNotEmpty() && !homeState.dencrypting) {
 				OperationSelectionBar(
 					paddingValues = bottomPaddingInDp,
-					onEncryptClicked = onEncryptClicked,
-					onDecryptClicked = onDecryptClicked
+					selectedTab = selectedTab,
+					onTabSelected = { selectedTab = it }
 				)
 			}
 		}
@@ -228,7 +238,7 @@ fun HomeScreenPreview() {
 		openFilePicker = {},
 		homeState = HomeState(fileContent = "deneme"),
 		resetState = {},
-		createKey = {keySize: Int, keyPairName: String ->
+		createKey = { keySize: Int, keyPairName: String ->
 
 		},
 		onEncryptClicked = {},

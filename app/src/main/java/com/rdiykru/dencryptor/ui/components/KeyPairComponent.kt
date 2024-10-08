@@ -2,6 +2,7 @@ package com.rdiykru.dencryptor.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -68,12 +69,11 @@ private fun KeyBody(modifier: Modifier, type: String, key: String, keySize: Int)
 			.wrapContentHeight(),
 		horizontalAlignment = Alignment.CenterHorizontally
 	) {
-		// Display key size
 		Text(
-			text = "Key Size: $keySize byte",  // Assuming the size is in bits
+			text = "Anahtar Boyutu: $keySize byte",
 			style = MaterialTheme.typography.bodyMedium,
 			color = MaterialTheme.colorScheme.onSecondaryContainer,
-			modifier = Modifier.padding(4.dp)  // Add some padding for better layout
+			modifier = Modifier.padding(4.dp)
 		)
 
 		Text(
@@ -98,6 +98,41 @@ private fun KeyBody(modifier: Modifier, type: String, key: String, keySize: Int)
 	}
 }
 
+
+@Composable
+fun SelectedKeyPair(keyPairName: String, keySize: Int) {
+	val shape = RoundedCornerShape(12.dp)
+	Row(
+		modifier = Modifier
+			.background(
+				color = MaterialTheme.colorScheme.surface,
+				shape = shape
+			)
+			.border(
+				width = 1.dp,
+				color = MaterialTheme.colorScheme.primary,
+				shape = RoundedCornerShape(12.dp)
+			)
+			.wrapContentHeight(),
+		verticalAlignment = Alignment.CenterVertically,
+		horizontalArrangement = Arrangement.Center
+	) {
+		DefaultTextCard(modifier = Modifier.weight(1f), "Anahtar Adı", keyPairName)
+		Spacer(modifier = Modifier.size(4.dp))
+		DefaultTextCard(modifier = Modifier.weight(1f), "Anahtar Boyutu", "$keySize byte")
+	}
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun SelectedKeyPairPreview() {
+	DencryptorTheme {
+		SelectedKeyPair(
+			keyPairName = "Sample Key Pair",
+			keySize = 2048
+		)
+	}
+}
 
 @Preview(showBackground = true)
 @Composable

@@ -16,11 +16,6 @@ import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
@@ -31,18 +26,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.rdiykru.dencryptor.R
 import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OperationSelectionBar(
 	paddingValues: Dp,
-	onEncryptClicked: () -> Unit,
-	onDecryptClicked: () -> Unit
+	selectedTab: Int,
+	onTabSelected: (Int) -> Unit,
 ) {
 	val tabTitles = listOf("Şifrele", "Şifre Çöz")
-	var selectedTab by remember { mutableIntStateOf(0) }
-	val coroutineScope = rememberCoroutineScope()
 
 	SecondaryTabRow(
 		selectedTabIndex = selectedTab,
@@ -66,14 +58,7 @@ fun OperationSelectionBar(
 			Tab(
 				selected = isSelected,
 				onClick = {
-					coroutineScope.launch {
-						selectedTab = index
-						if (index == 0) {
-							onEncryptClicked()
-						} else {
-							onDecryptClicked()
-						}
-					}
+					onTabSelected(index)
 				},
 				text = {
 					Text(
@@ -115,8 +100,8 @@ fun OperationSelectionBarPreview() {
 	DencryptorTheme {
 		OperationSelectionBar(
 			2.dp,
-			onEncryptClicked = { },
-			onDecryptClicked = { }
+			onTabSelected = {},
+			selectedTab = 0
 		)
 	}
 }
