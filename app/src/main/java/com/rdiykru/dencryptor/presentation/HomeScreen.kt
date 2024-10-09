@@ -304,10 +304,16 @@ fun HomeScreen(
 	)
 
 	if (homeState.fileList != null) {
+		val filteredKeyFileList = when (selectedTab) {
+			0 -> homeState.fileList.filter { it.contains("_Public", ignoreCase = true) }
+			1 -> homeState.fileList.filter { it.contains("_Private", ignoreCase = true) }
+			else -> homeState.fileList
+		}
+
 		FileListComponent(
 			openBottomSheet = openKeyBottomSheet,
 			bottomSheetState = bottomSheetState,
-			fileList = homeState.fileList,
+			fileList = filteredKeyFileList,
 			onItemClicked = { selectedFileName ->
 				selectKeyPairFile(selectedFileName)
 			},
