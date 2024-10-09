@@ -54,7 +54,7 @@ fun InputDialog(
 				horizontalAlignment = Alignment.CenterHorizontally
 			) {
 				Text(
-					text = "Input Required",
+					text = "Bu Alanın Doldurulması Zorunludur.",
 					fontWeight = FontWeight.Bold,
 					textAlign = TextAlign.Center,
 					modifier = Modifier.padding(bottom = 16.dp)
@@ -66,7 +66,7 @@ fun InputDialog(
 						inputText = it
 						errorMessage = "" // Clear error message when user types
 					},
-					label = { Text("Enter your input") },
+					label = { Text("Dosya Adını Giriniz") },
 					modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
 				)
 
@@ -86,19 +86,19 @@ fun InputDialog(
 						onClick = { onDismiss() },
 						colors = ButtonDefaults.buttonColors(containerColor = Color.Transparent)
 					) {
-						Text(text = "Cancel")
+						Text(text = "İptal")
 					}
 					Button(
 						onClick = {
 							if (inputText.isEmpty()) {
-								errorMessage = "Input cannot be empty!"
+								errorMessage = "Bu Alan Boş Bırakılamaz"
 							} else {
 								onSave(inputText)
 								onDismiss()
 							}
 						}
 					) {
-						Text(text = "Save")
+						Text(text = "Kaydet")
 					}
 				}
 			}

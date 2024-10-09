@@ -41,7 +41,7 @@ class MainViewModel @Inject constructor(
 		if (fileName.contains("Public")) {
 			fileOperationsManager.readKeyPairFile(fileName)?.let { publicKey ->
 				homeState.update { it.copy(publicKey = publicKey.toPublicKey()) }
-				homeState.update { it.copy(keyPairName = fileName) }
+				homeState.update { it.copy(publicKeyName = fileName) }
 				Log.d(TAG, "getKeyFile: Public key retrieved")
 				viewModelScope.launch {
 					sendHomeEvent(HomeEvent.ShowSuccessMessage("Genel anahtar başarıyla alındı."))
@@ -50,7 +50,7 @@ class MainViewModel @Inject constructor(
 		} else if (fileName.contains("Private")) {
 			fileOperationsManager.readKeyPairFile(fileName)?.let { private ->
 				homeState.update { it.copy(privateKey = private.toPrivateKey()) }
-				homeState.update { it.copy(keyPairName = fileName) }
+				homeState.update { it.copy(privateKeyName = fileName) }
 				Log.d(TAG, "getKeyFile: Private key retrieved")
 				viewModelScope.launch {
 					sendHomeEvent(HomeEvent.ShowSuccessMessage("Özel anahtar başarıyla alındı."))
@@ -166,15 +166,14 @@ class MainViewModel @Inject constructor(
 		Log.d(TAG, "createKeyPair: keySize = $keySize, keyPairName = $keyPairName")
 
 		viewModelScope.launch {
-			homeState.update { it.copy(keyPairName = keyPairName) }
-
+			updateKeyPairName(keyPairName)
 			try {
 				if (keySize == homeState.value.fileSize) {
-					createDynamicSizedKeypair()
+					createDynamicSizedKeypair(keyPairName = keyPairName)
 				} else if (keySize > (1024 * 8)) {
 					sendHomeEvent(HomeEvent.ShowErrorMessage("Oluşturulmak istenen anahtar boyutu fazla büyük."))
 				} else {
-					createStaticSizedKeypair(keySize)
+					createStaticSizedKeypair(keyPairName = keyPairName, keySize = keySize)
 				}
 			} catch (e: Exception) {
 				Log.e(TAG, "createKeyPair: Failed to create key pair: ${e.message}", e)
@@ -183,7 +182,7 @@ class MainViewModel @Inject constructor(
 		}
 	}
 
-	private fun createStaticSizedKeypair(keySize: Int) {
+	private fun createStaticSizedKeypair(keySize: Int, keyPairName: String) {
 		Log.d(TAG, "createStaticSizedKeypair: keySize = $keySize")
 		viewModelScope.launch(Dispatchers.IO) {
 			homeState.update { it.copy(dencrypting = true) }
@@ -197,7 +196,7 @@ class MainViewModel @Inject constructor(
 				// Set a timeout of 15 seconds for key pair generation
 				withTimeout(15000) {
 					val keyPair = RSA.generateKeyPair(keySize * 8)
-					saveKeyPairFile(homeState.value.keyPairName, keyPair)
+					saveKeyPairFile(keyPairName, keyPair)
 					updateKeyPair(keyPair)
 					sendHomeEvent(HomeEvent.ShowSuccessMessage("Anahtar çifti başarıyla oluşturuldu."))
 				}
@@ -213,7 +212,7 @@ class MainViewModel @Inject constructor(
 		}
 	}
 
-	private fun createDynamicSizedKeypair() {
+	private fun createDynamicSizedKeypair(keyPairName: String) {
 		Log.d(TAG, "createDynamicSizedKeypair")
 		viewModelScope.launch(Dispatchers.IO) {
 			homeState.update { it.copy(dencrypting = true) }
@@ -227,11 +226,12 @@ class MainViewModel @Inject constructor(
 							sendHomeEvent(HomeEvent.ShowErrorMessage("Anahtar boyutu 1024 byte'tan fazla olamaz."))
 							return@withTimeout
 						}
+
 						else -> fileSizeInBits + 24 // margin of error, not calculated
 					}
 					Log.d(TAG, "createDynamicSizedKeypair: keySize = $keySize")
 					val keyPair = RSA.generateKeyPair(keySize)
-					saveKeyPairFile(homeState.value.keyPairName, keyPair)
+					saveKeyPairFile(keyPairName, keyPair)
 					updateKeyPair(keyPair)
 					sendHomeEvent(HomeEvent.ShowSuccessMessage("Dinamik boyutlu anahtar çifti başarıyla oluşturuldu."))
 				}
@@ -239,7 +239,11 @@ class MainViewModel @Inject constructor(
 				Log.e(TAG, "createDynamicSizedKeypair: Key pair generation timed out", e)
 				sendHomeEvent(HomeEvent.ShowErrorMessage("Dinamik boyutlu anahtar çifti oluşturma süresi aşıldı."))
 			} catch (e: Exception) {
-				Log.e(TAG, "createDynamicSizedKeypair: Failed to generate dynamic key pair: ${e.message}", e)
+				Log.e(
+					TAG,
+					"createDynamicSizedKeypair: Failed to generate dynamic key pair: ${e.message}",
+					e
+				)
 				sendHomeEvent(HomeEvent.ShowErrorMessage("Dinamik boyutlu anahtar çifti oluşturulamadı: ${e.message}"))
 			} finally {
 				homeState.update { it.copy(dencrypting = false) }
@@ -315,6 +319,12 @@ class MainViewModel @Inject constructor(
 		homeState.update { it.copy(publicKey = keyPair.publicKey) }
 	}
 
+	private fun updateKeyPairName(keyPairName: String) {
+		Log.d(TAG, "updateKeyPairName")
+		homeState.update { it.copy(privateKeyName = "${keyPairName}_Private") }
+		homeState.update { it.copy(publicKeyName = "${keyPairName}_Public") }
+	}
+
 
 	private fun sendHomeEvent(event: HomeEvent) {
 		viewModelScope.launch {
@@ -353,7 +363,8 @@ data class HomeState(
 	val decryptedContent: String = "",
 	val publicKey: RSA.PublicKey? = null,
 	val privateKey: RSA.PrivateKey? = null,
-	val keyPairName: String = ""
+	val publicKeyName: String = "",
+	val privateKeyName: String = ""
 )
 
 sealed interface HomeEvent {

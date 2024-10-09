@@ -195,7 +195,10 @@ fun HomeScreen(
 							}
 						}
 						Column {
-							if (homeState.publicKey != null) {
+							if (
+								(homeState.publicKey != null && selectedTab == 0) ||
+								(homeState.privateKey != null && selectedTab == 1)
+							) {
 								Column(
 									modifier = Modifier
 										.fillMaxWidth()
@@ -205,8 +208,8 @@ fun HomeScreen(
 									verticalArrangement = Arrangement.Center
 								) {
 									SelectedKeyPair(
-										keyPairName = homeState.keyPairName,
-										keySize = homeState.publicKey.size()
+										keyPairName = if (selectedTab == 0) homeState.publicKeyName else homeState.privateKeyName,
+										keySize = if (selectedTab == 0) homeState.publicKey!!.size() else homeState.privateKey!!.size()
 									)
 								}
 							}
@@ -393,7 +396,6 @@ fun DoubleButtons(
 	}
 }
 
-
 @Preview(showBackground = true, uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 private fun DoubleButtonsPreview(
@@ -426,7 +428,6 @@ fun HomeScreenPreview() {
 				e = BigInteger(byteArrayExample),
 				n = BigInteger(byteArrayExample2)
 			),
-			keyPairName = "Test Key"
 		),
 		createKey = { keySize: Int, keyPairName: String ->
 		},
