@@ -25,7 +25,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -47,6 +47,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rdiykru.dencryptor.R
 import com.rdiykru.dencryptor.core.extensions.Formatters.size
+import com.rdiykru.dencryptor.ui.components.CustomSnackbar
 import com.rdiykru.dencryptor.ui.components.DencryptedContent
 import com.rdiykru.dencryptor.ui.components.FileContentDisplay
 import com.rdiykru.dencryptor.ui.components.FileListComponent
@@ -83,10 +84,18 @@ fun HomeScreen(
         homeEvents.collect { event ->
             when (event) {
                 is HomeEvent.ShowErrorMessage -> {
-                    snackbarHostState.showSnackbar(event.error)
+                    snackbarHostState.showSnackbar(
+                        message = event.error,
+                        duration = SnackbarDuration.Short
+                    )
+                    snackbarHostState.currentSnackbarData?.dismiss()
                 }
                 is HomeEvent.ShowSuccessMessage -> {
-                    snackbarHostState.showSnackbar(event.success)
+                    snackbarHostState.showSnackbar(
+                        message = event.success,
+                        duration = SnackbarDuration.Short
+                    )
+                    snackbarHostState.currentSnackbarData?.dismiss()
                 }
             }
         }
@@ -108,7 +117,15 @@ fun HomeScreen(
     val bottomPaddingInDp = with(LocalDensity.current) { bottomPaddingInPixels.toDp() }
 
     Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+                snackbar = { snackbarData ->
+                    val isError = snackbarData.visuals.message.contains("Hata:", ignoreCase = true)
+                    CustomSnackbar(snackbarData, isError)
+                }
+            )
+        },
         modifier = Modifier.fillMaxSize(),
         content = { paddingValues ->
             Box(modifier = Modifier.fillMaxSize()) {

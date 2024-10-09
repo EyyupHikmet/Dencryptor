@@ -47,30 +47,30 @@ object RSA {
 	}
 
 	private fun isStrongPrime(prime: BigInteger): Boolean {
-		return prime.isProbablePrime(100) // 100 rounds of certainty
+		return prime.isProbablePrime(100)
 	}
 
 	fun encrypt(message: String, publicKey: PublicKey): String {
 		val messageBytes = message.toByteArray(Charsets.UTF_8)
-		val messageBigInt = BigInteger(1, messageBytes) // Convert to BigInteger (positive)
+		val messageBigInt = BigInteger(1, messageBytes)
 
 		if (messageBigInt >= publicKey.n) {
-			throw IllegalArgumentException("Message must be smaller than the modulus (n)")
+			throw IllegalArgumentException("Mesaj, modül (n)'den küçük olmalıdır.")
 		}
 
 		val ciphertextBigInt = messageBigInt.modPow(publicKey.e, publicKey.n)
-		return ciphertextBigInt.toString(16) // Convert BigInteger to hex string for transmission
+		return ciphertextBigInt.toString(16)
 	}
 
 	fun decrypt(ciphertextHex: String, privateKey: PrivateKey): String {
-		val ciphertextBigInt = BigInteger(ciphertextHex, 16) // Convert hex string to BigInteger
+		val ciphertextBigInt = BigInteger(ciphertextHex, 16)
 
 		if (ciphertextBigInt >= privateKey.n) {
-			throw IllegalArgumentException("Ciphertext must be smaller than the modulus (n)")
+			throw IllegalArgumentException("Şifreli metin, modül (n)'den küçük olmalıdır.")
 		}
 
 		val decryptedBigInt = ciphertextBigInt.modPow(privateKey.d, privateKey.n)
 		val decryptedBytes = decryptedBigInt.toByteArray()
-		return String(decryptedBytes, Charsets.UTF_8) // Convert bytes back to String
+		return String(decryptedBytes, Charsets.UTF_8)
 	}
 }

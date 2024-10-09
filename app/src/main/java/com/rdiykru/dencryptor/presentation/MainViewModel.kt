@@ -297,7 +297,7 @@ class MainViewModel @Inject constructor(
 
 	private fun sendHomeEvent(event: HomeEvent) {
 		viewModelScope.launch {
-			sendEvent(_homeEvents, event, TAG)
+			sendEvent(_homeEvents, formatMessage(event), TAG)
 		}
 	}
 
@@ -309,6 +309,13 @@ class MainViewModel @Inject constructor(
 	fun resetState() {
 		Log.d(TAG, "resetState")
 		homeState.update { HomeState() }
+	}
+
+	private fun formatMessage(event: HomeEvent): HomeEvent {
+		return when (event) {
+			is HomeEvent.ShowErrorMessage -> HomeEvent.ShowErrorMessage("Hata: ${event.error}")
+			is HomeEvent.ShowSuccessMessage -> HomeEvent.ShowSuccessMessage("Başarı: ${event.success}")
+		}
 	}
 
 	companion object {
