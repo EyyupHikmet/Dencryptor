@@ -25,9 +25,13 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -52,6 +56,8 @@ import com.rdiykru.dencryptor.ui.components.OperationSelectionBar
 import com.rdiykru.dencryptor.ui.components.SelectFileInfo
 import com.rdiykru.dencryptor.ui.components.SelectedKeyPair
 import com.rdiykru.dencryptor.ui.theme.DencryptorTheme
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 @ExperimentalMaterial3Api
 @Composable
@@ -64,12 +70,28 @@ fun HomeScreen(
     selectLocalEncryptedFile: (String) -> Unit,
     selectLocalDecryptedFile: (String) -> Unit,
     homeState: HomeState,
+    homeEvents: Flow<HomeEvent>,
     createKey: (Int, String) -> Unit,
     saveEncryptedFile: (String) -> Unit,
     saveDecryptedFile: (String) -> Unit,
     onEncryptClicked: () -> Unit,
     onDecryptClicked: () -> Unit
 ) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(Unit) {
+        homeEvents.collect { event ->
+            when (event) {
+                is HomeEvent.ShowErrorMessage -> {
+                    snackbarHostState.showSnackbar(event.error)
+                }
+                is HomeEvent.ShowSuccessMessage -> {
+                    snackbarHostState.showSnackbar(event.success)
+                }
+            }
+        }
+    }
+
     var openKeyCreatorDialog by rememberSaveable { mutableStateOf(false) }
     var openFileCreatorDialog by remember { mutableStateOf(false) }
 
@@ -86,6 +108,7 @@ fun HomeScreen(
     val bottomPaddingInDp = with(LocalDensity.current) { bottomPaddingInPixels.toDp() }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         modifier = Modifier.fillMaxSize(),
         content = { paddingValues ->
             Box(modifier = Modifier.fillMaxSize()) {
@@ -351,19 +374,20 @@ private fun DoubleButtonsPreview(
 @Composable
 fun HomeScreenPreview() {
     HomeScreen(
-        openFilePicker = {},
-        getKeyPairList = {},
-        selectKeyPairFile = {},
-        homeState = HomeState(fileContent = "deneme"),
-        createKey = { keySize: Int, keyPairName: String ->
-        },
-        selectLocalDecryptedFile = {},
-        selectLocalEncryptedFile = {},
-        getLocalDecryptedList = {},
-        getLocalEncryptedList = {},
-        saveDecryptedFile = {},
-        saveEncryptedFile = {},
-        onEncryptClicked = {},
-        onDecryptClicked = {}
+	    openFilePicker = {},
+	    getKeyPairList = {},
+	    selectKeyPairFile = {},
+	    homeState = HomeState(fileContent = "deneme"),
+	    createKey = { keySize: Int, keyPairName: String ->
+	    },
+	    selectLocalDecryptedFile = {},
+	    selectLocalEncryptedFile = {},
+	    getLocalDecryptedList = {},
+	    getLocalEncryptedList = {},
+	    saveDecryptedFile = {},
+	    saveEncryptedFile = {},
+	    onEncryptClicked = {},
+	    onDecryptClicked = {},
+        homeEvents = emptyFlow(),
     )
 }

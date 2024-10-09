@@ -46,6 +46,7 @@ class MainActivity : ComponentActivity() {
 						viewModel.getKeyFile(it)
 					},
 					homeState = homeState,
+					homeEvents = viewModel.homeEvents,
 					createKey = { keySize: Int, keyPairName: String ->
 						viewModel.createKeyPair(keySize, keyPairName)
 					},
