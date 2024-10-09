@@ -14,12 +14,14 @@ import com.rdiykru.dencryptor.core.extensions.sendEvent
 import com.rdiykru.dencryptor.core.file.FileOperationsManager
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import java.math.BigInteger
 import javax.inject.Inject
 
@@ -169,6 +171,8 @@ class MainViewModel @Inject constructor(
 			try {
 				if (keySize == homeState.value.fileSize) {
 					createDynamicSizedKeypair()
+				} else if (keySize > (1024 * 8)) {
+					sendHomeEvent(HomeEvent.ShowErrorMessage("Oluşturulmak istenen anahtar boyutu fazla büyük."))
 				} else {
 					createStaticSizedKeypair(keySize)
 				}
@@ -184,10 +188,22 @@ class MainViewModel @Inject constructor(
 		viewModelScope.launch(Dispatchers.IO) {
 			homeState.update { it.copy(dencrypting = true) }
 			try {
-				val keyPair = RSA.generateKeyPair(keySize * 8)
-				saveKeyPairFile(homeState.value.keyPairName, keyPair)
-				updateKeyPair(keyPair)
-				sendHomeEvent(HomeEvent.ShowSuccessMessage("Anahtar çifti başarıyla oluşturuldu."))
+				// Enforce key size limit of 1024 * 8 bits
+				if (keySize > 1024 * 8) {
+					sendHomeEvent(HomeEvent.ShowErrorMessage("Oluşturulmak istenen anahtar boyutu fazla büyük."))
+					return@launch
+				}
+
+				// Set a timeout of 15 seconds for key pair generation
+				withTimeout(15000) {
+					val keyPair = RSA.generateKeyPair(keySize * 8)
+					saveKeyPairFile(homeState.value.keyPairName, keyPair)
+					updateKeyPair(keyPair)
+					sendHomeEvent(HomeEvent.ShowSuccessMessage("Anahtar çifti başarıyla oluşturuldu."))
+				}
+			} catch (e: TimeoutCancellationException) {
+				Log.e(TAG, "createStaticSizedKeypair: Key pair generation timed out", e)
+				sendHomeEvent(HomeEvent.ShowErrorMessage("Statik boyutlu anahtar çifti oluşturma süresi aşıldı."))
 			} catch (e: Exception) {
 				Log.e(TAG, "createStaticSizedKeypair: Failed to generate key pair: ${e.message}", e)
 				sendHomeEvent(HomeEvent.ShowErrorMessage("Statik boyutlu anahtar çifti oluşturulamadı: ${e.message}"))
@@ -202,29 +218,34 @@ class MainViewModel @Inject constructor(
 		viewModelScope.launch(Dispatchers.IO) {
 			homeState.update { it.copy(dencrypting = true) }
 			try {
-				val fileSizeInBits = homeState.value.fileSize * 8
-				val keySize = when {
-					fileSizeInBits < 2048 -> 2048
-					else -> fileSizeInBits + 24 // margin of error, not calculated
+				// Set a timeout of 15 seconds for key pair generation
+				withTimeout(15000) {
+					val fileSizeInBits = homeState.value.fileSize * 8
+					val keySize = when {
+						fileSizeInBits < 2048 -> 2048
+						fileSizeInBits > (1024 * 8) -> {
+							sendHomeEvent(HomeEvent.ShowErrorMessage("Anahtar boyutu 1024 byte'tan fazla olamaz."))
+							return@withTimeout
+						}
+						else -> fileSizeInBits + 24 // margin of error, not calculated
+					}
+					Log.d(TAG, "createDynamicSizedKeypair: keySize = $keySize")
+					val keyPair = RSA.generateKeyPair(keySize)
+					saveKeyPairFile(homeState.value.keyPairName, keyPair)
+					updateKeyPair(keyPair)
+					sendHomeEvent(HomeEvent.ShowSuccessMessage("Dinamik boyutlu anahtar çifti başarıyla oluşturuldu."))
 				}
-				Log.d(TAG, "createDynamicSizedKeypair: keySize = $keySize")
-				val keyPair = RSA.generateKeyPair(keySize)
-				saveKeyPairFile(homeState.value.keyPairName, keyPair)
-				updateKeyPair(keyPair)
-				sendHomeEvent(HomeEvent.ShowSuccessMessage("Dinamik boyutlu anahtar çifti başarıyla oluşturuldu."))
+			} catch (e: TimeoutCancellationException) {
+				Log.e(TAG, "createDynamicSizedKeypair: Key pair generation timed out", e)
+				sendHomeEvent(HomeEvent.ShowErrorMessage("Dinamik boyutlu anahtar çifti oluşturma süresi aşıldı."))
 			} catch (e: Exception) {
-				Log.e(
-					TAG,
-					"createDynamicSizedKeypair: Failed to generate dynamic key pair: ${e.message}",
-					e
-				)
+				Log.e(TAG, "createDynamicSizedKeypair: Failed to generate dynamic key pair: ${e.message}", e)
 				sendHomeEvent(HomeEvent.ShowErrorMessage("Dinamik boyutlu anahtar çifti oluşturulamadı: ${e.message}"))
 			} finally {
 				homeState.update { it.copy(dencrypting = false) }
 			}
 		}
 	}
-
 
 	fun encryptFileContent() {
 		Log.d(TAG, "encryptFileContent")
